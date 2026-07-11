@@ -1,0 +1,473 @@
+<title>XLSMART Instagram Sentiment &amp; Topic Insights</title>
+<style>
+  .viz-root {
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --card-surface:   #ffffff;
+
+    --status-good:     #0ca30c;
+    --status-critical: #d03b3b;
+    --status-neutral:  #898781;
+
+    --good-wash:     rgba(12,163,12,0.10);
+    --critical-wash: rgba(208,59,59,0.10);
+    --neutral-wash:  rgba(137,135,129,0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    .viz-root {
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --card-surface:   #201f1e;
+
+      --status-good:     #0ca30c;
+      --status-critical: #e66767;
+      --status-neutral:  #898781;
+
+      --good-wash:     rgba(12,163,12,0.16);
+      --critical-wash: rgba(230,103,103,0.16);
+      --neutral-wash:  rgba(137,135,129,0.18);
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --card-surface:   #201f1e;
+    --status-good:     #0ca30c;
+    --status-critical: #e66767;
+    --status-neutral:  #898781;
+    --good-wash:     rgba(12,163,12,0.16);
+    --critical-wash: rgba(230,103,103,0.16);
+    --neutral-wash:  rgba(137,135,129,0.18);
+  }
+  :root[data-theme="light"] .viz-root {
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --card-surface:   #ffffff;
+    --status-good:     #0ca30c;
+    --status-critical: #d03b3b;
+    --status-neutral:  #898781;
+    --good-wash:     rgba(12,163,12,0.10);
+    --critical-wash: rgba(208,59,59,0.10);
+    --neutral-wash:  rgba(137,135,129,0.14);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  .viz-root {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 32px 20px 64px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header.page-head { margin-bottom: 28px; }
+  header.page-head h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+  header.page-head p { font-size: 14px; color: var(--text-secondary); margin: 0; max-width: 720px; line-height: 1.5; }
+
+  .card {
+    background: var(--card-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+  .card .card-sub { font-size: 12.5px; color: var(--text-muted); margin: 0 0 18px; }
+
+  /* KPI row */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi-tile {
+    background: var(--card-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .kpi-tile .kpi-label { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; display:flex; align-items:center; gap:6px;}
+  .kpi-tile .kpi-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .kpi-tile .kpi-note { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display:inline-block; flex: none; }
+  .dot.good { background: var(--status-good); }
+  .dot.critical { background: var(--status-critical); }
+  .dot.neutral-dot { background: var(--status-neutral); }
+  .dot.total-dot { background: var(--text-primary); }
+
+  /* legend */
+  .legend { display:flex; gap:18px; flex-wrap: wrap; margin-bottom: 16px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend .item { display:flex; align-items:center; gap:6px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; flex:none; }
+  .legend .swatch.good { background: var(--status-good); }
+  .legend .swatch.critical { background: var(--status-critical); }
+  .legend .swatch.neutral-sw { background: var(--status-neutral); }
+
+  /* topic stacked bars */
+  .topic-row { margin-bottom: 14px; }
+  .topic-row:last-child { margin-bottom: 0; }
+  .topic-row-head { display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .topic-row-head .name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+  .topic-row-head .count { font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .stack-track { position: relative; height: 22px; width: 100%; background: transparent; }
+  .stack-seg {
+    position: absolute; top: 0; height: 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: filter 0.1s ease;
+  }
+  .stack-seg:hover, .stack-seg:focus { filter: brightness(1.12); outline: none; }
+  .stack-seg.good { background: var(--status-good); }
+  .stack-seg.critical { background: var(--status-critical); }
+  .stack-seg.neutral-seg { background: var(--status-neutral); }
+
+  /* weekly chart */
+  .weekly-chart { display: flex; align-items: flex-end; gap: 10px; height: 220px; padding-top: 20px; border-bottom: 1px solid var(--baseline); }
+  .week-col { flex: 1; display:flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; min-width: 0; }
+  .week-col .col-total { font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+  .week-col .col-stack { width: 100%; max-width: 34px; display:flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; }
+  .week-col .seg { width: 100%; cursor: pointer; transition: filter 0.1s ease; }
+  .week-col .seg:hover { filter: brightness(1.12); }
+  .week-col .seg.good { background: var(--status-good); }
+  .week-col .seg.critical { background: var(--status-critical); }
+  .week-col .seg.neutral-seg { background: var(--status-neutral); }
+  .week-col .week-label { font-size: 10.5px; color: var(--text-muted); margin-top: 8px; text-align: center; line-height: 1.3; }
+
+  /* tooltip */
+  .viz-tooltip {
+    position: fixed; pointer-events: none; z-index: 50;
+    background: var(--text-primary); color: var(--card-surface);
+    font-size: 12px; padding: 7px 10px; border-radius: 6px;
+    line-height: 1.4; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    opacity: 0; transform: translate(-50%, calc(-100% - 10px));
+    transition: opacity 0.08s ease; max-width: 240px;
+  }
+  .viz-tooltip.show { opacity: 1; }
+  .viz-tooltip b { font-weight: 700; }
+
+  /* quotes */
+  .quote-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .quote-col-title { font-size: 13px; font-weight: 700; margin: 0 0 10px; display:flex; align-items:center; gap:6px; }
+  .quote-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+    background: var(--surface-1);
+  }
+  .quote-card p { font-size: 13px; line-height: 1.5; margin: 0 0 8px; color: var(--text-primary); }
+  .quote-meta { display:flex; gap: 8px; align-items:center; flex-wrap: wrap; }
+  .badge { font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; color: var(--text-secondary); background: var(--neutral-wash); }
+  .badge.flag { color: var(--status-critical); background: var(--critical-wash); }
+
+  footer.notes { margin-top: 8px; }
+  footer.notes ul { margin: 8px 0 0; padding-left: 18px; }
+  footer.notes li { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 4px; }
+
+  @media (max-width: 720px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .quote-grid { grid-template-columns: 1fr; }
+    .weekly-chart { gap: 4px; }
+  }
+</style>
+
+<div class="viz-root">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>XLSMART Instagram — Comment Sentiment &amp; Topic Insights</h1>
+      <p>173 customer comments across 31 posts published between 12 May – 7 Jul 2026, scraped from @xlsmart via Apify and classified by sentiment and topic. Excludes @xlsmart's own customer-service replies.</p>
+    </header>
+
+    <div class="kpi-row">
+      <div class="kpi-tile">
+        <div class="kpi-label"><span class="dot total-dot"></span>Comments analyzed</div>
+        <div class="kpi-value">173</div>
+        <div class="kpi-note">across 31 posts</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label"><span class="dot good"></span>Positive</div>
+        <div class="kpi-value">45%</div>
+        <div class="kpi-note">78 comments</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label"><span class="dot critical"></span>Negative</div>
+        <div class="kpi-value">38%</div>
+        <div class="kpi-note">65 comments</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label"><span class="dot neutral-dot"></span>Neutral</div>
+        <div class="kpi-value">17%</div>
+        <div class="kpi-note">30 comments</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Sentiment by topic category</h2>
+      <p class="card-sub">Bar length = comment volume for that topic; segments show sentiment split. Sorted by volume.</p>
+      <div class="legend">
+        <span class="item"><span class="swatch critical"></span>Negative</span>
+        <span class="item"><span class="swatch neutral-sw"></span>Neutral</span>
+        <span class="item"><span class="swatch good"></span>Positive</span>
+      </div>
+      <div id="topicChart"></div>
+    </div>
+
+    <div class="card">
+      <h2>Weekly volume &amp; sentiment trend</h2>
+      <p class="card-sub">Comment volume per week (grouped by the post's publish date), colored by sentiment.</p>
+      <div class="legend">
+        <span class="item"><span class="swatch critical"></span>Negative</span>
+        <span class="item"><span class="swatch neutral-sw"></span>Neutral</span>
+        <span class="item"><span class="swatch good"></span>Positive</span>
+      </div>
+      <div class="weekly-chart" id="weeklyChart"></div>
+    </div>
+
+    <div class="card">
+      <h2>Notable comments</h2>
+      <p class="card-sub">Representative quotes pulled from the dataset — illustrative, not exhaustive.</p>
+      <div class="quote-grid">
+        <div>
+          <p class="quote-col-title"><span class="dot critical"></span>Top complaints</p>
+          <div class="quote-card">
+            <p>"MANA SMARTFREN SIGNAL SAYA 3 HARI LOH 1 BATANG! KALIAN BENER'YA BIKIN SAYA RUGI... HARUS BNER' VIRAL DLU?"</p>
+            <div class="quote-meta"><span class="badge">Network Experience</span><span class="badge flag">posted 10×</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"APASIH GA GUNA BENERIN TUH JARINGAN SEKARANG JELEK WOII XL INI GA GUNA DARI DULU GADA PERUBAHAN MIKIR DUIT DUIT DOANG WOII JAWA BARAT JELEK"</p>
+            <div class="quote-meta"><span class="badge">Network Experience</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"Kenapa Beli Paket XLSmart Di Kode *808# Sama Di Aplikasi myXL Kuotanya Berbeda Padahal Harga Dan Paketnya Sama Tapi Kuota Yang Di Dapat Berbeda?"</p>
+            <div class="quote-meta"><span class="badge">Package &amp; Pricing</span><span class="badge flag">posted 4×</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"Internet mati nih udah mau 2 minggu. Udah tlp cs tapi teknisi ga dateng. Terus saya harus gimana lagi? Saya bayar loh. Jelek banget servicenya"</p>
+            <div class="quote-meta"><span class="badge">Customer Service</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"Saya membeli esim baru namun belum dapat kode QR yang dikirim ke email, gimana ini pelayanan xl."</p>
+            <div class="quote-meta"><span class="badge">App &amp; Account</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="quote-col-title"><span class="dot good"></span>Top praise</p>
+          <div class="quote-card">
+            <p>"THANK U @xlsmart @xlprioritas SIGNAL NYA SECEPAT ITU KERENNN"</p>
+            <div class="quote-meta"><span class="badge">Network Experience</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"Keren 5G+ nya XLSMART bisa dapet 490-495 an Mbps di rumah"</p>
+            <div class="quote-meta"><span class="badge">Network Experience</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"makin solid setelah merger"</p>
+            <div class="quote-meta"><span class="badge">Corporate &amp; Brand</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"Program bagus, menjawab tantangan ekonomi saat ini"</p>
+            <div class="quote-meta"><span class="badge">Corporate &amp; Brand</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"keren banget bisa nyatuin ribuan orang dalam satu semangat"</p>
+            <div class="quote-meta"><span class="badge">Events &amp; CSR</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:12px;">Methodology &amp; caveats</h2>
+      <footer class="notes">
+        <ul>
+          <li>Sentiment and topic were assigned by manual review of each comment's text (Indonesian-language, informal/slang), not a statistical classifier — treat splits as directional, not lab-grade precision.</li>
+          <li>@xlsmart's own customer-service reply comments (5) and 20 blank/emoji-stripped rows were excluded, leaving 173 of the original 193 scraped comments.</li>
+          <li>Apify's free-tier access capped comment retrieval at roughly 15 per post on most posts, so high-engagement posts are undersampled relative to their true comment count.</li>
+          <li>One 10x-repeated complaint about a 3-day signal outage inflates the Network Experience negative count — treat it as one viral incident, not ten independent complaints.</li>
+          <li>2 of the 31 posts were published slightly before the intended 30-day window (Apify's date filter returned them regardless); included here since they still carry live customer commentary.</li>
+        </ul>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<div class="viz-tooltip" id="vizTooltip"></div>
+
+<script>
+(function() {
+  var topicData = [
+    { name: "Network Experience", negative: 46, neutral: 19, positive: 6 },
+    { name: "Corporate & Brand",  negative: 1,  neutral: 2,  positive: 40 },
+    { name: "Events & CSR",       negative: 0,  neutral: 0,  positive: 32 },
+    { name: "Package & Pricing",  negative: 8,  neutral: 2,  positive: 0 },
+    { name: "Other",              negative: 1,  neutral: 7,  positive: 0 },
+    { name: "Customer Service",   negative: 7,  neutral: 0,  positive: 0 },
+    { name: "App & Account",      negative: 2,  neutral: 0,  positive: 0 }
+  ];
+
+  var weeklyData = [
+    { label: "12–18 May",  negative: 7,  neutral: 1, positive: 6 },
+    { label: "19–25 May",  negative: 9,  neutral: 2, positive: 3 },
+    { label: "26 May–1 Jun", negative: 0, neutral: 0, positive: 0 },
+    { label: "2–8 Jun",    negative: 0,  neutral: 0, positive: 0 },
+    { label: "9–15 Jun",   negative: 6,  neutral: 3, positive: 15 },
+    { label: "16–22 Jun",  negative: 28, neutral: 2, positive: 4 },
+    { label: "23–29 Jun",  negative: 6,  neutral: 15, positive: 2 },
+    { label: "30 Jun–6 Jul", negative: 9, neutral: 7, positive: 44 },
+    { label: "7–13 Jul",   negative: 0,  neutral: 0, positive: 4 }
+  ];
+
+  var tooltip = document.getElementById("vizTooltip");
+  function showTooltip(evt, html) {
+    tooltip.innerHTML = "";
+    var parts = html;
+    parts.forEach(function(p) {
+      var div = document.createElement("div");
+      if (p.strong) {
+        var b = document.createElement("b");
+        b.textContent = p.text;
+        div.appendChild(b);
+      } else {
+        div.appendChild(document.createTextNode(p.text));
+      }
+      tooltip.appendChild(div);
+    });
+    tooltip.style.left = evt.clientX + "px";
+    tooltip.style.top = evt.clientY + "px";
+    tooltip.classList.add("show");
+  }
+  function hideTooltip() { tooltip.classList.remove("show"); }
+
+  // Topic stacked bar chart
+  var topicChart = document.getElementById("topicChart");
+  var maxTopicTotal = Math.max.apply(null, topicData.map(function(d) { return d.negative + d.neutral + d.positive; }));
+
+  topicData.forEach(function(d) {
+    var total = d.negative + d.neutral + d.positive;
+    var row = document.createElement("div");
+    row.className = "topic-row";
+
+    var head = document.createElement("div");
+    head.className = "topic-row-head";
+    var name = document.createElement("span");
+    name.className = "name";
+    name.textContent = d.name;
+    var count = document.createElement("span");
+    count.className = "count";
+    count.textContent = total + " comments";
+    head.appendChild(name);
+    head.appendChild(count);
+    row.appendChild(head);
+
+    var track = document.createElement("div");
+    track.className = "stack-track";
+
+    var segments = [
+      { key: "negative", cls: "critical", value: d.negative, label: "Negative" },
+      { key: "neutral", cls: "neutral-seg", value: d.neutral, label: "Neutral" },
+      { key: "positive", cls: "good", value: d.positive, label: "Positive" }
+    ];
+
+    var offsetPct = 0; // percentage of full track width (relative to maxTopicTotal)
+    var trackWidthPct = (total / maxTopicTotal) * 100;
+    segments.forEach(function(seg) {
+      if (seg.value === 0) return;
+      var segWidthPct = (seg.value / total) * trackWidthPct;
+      var el = document.createElement("div");
+      el.className = "stack-seg " + seg.cls;
+      el.style.left = offsetPct + "%";
+      el.style.width = segWidthPct + "%";
+      el.tabIndex = 0;
+      var pct = Math.round((seg.value / total) * 100);
+      el.addEventListener("pointermove", function(evt) {
+        showTooltip(evt, [
+          { text: d.name, strong: false },
+          { text: seg.label + ": " + seg.value + " (" + pct + "%)", strong: true }
+        ]);
+      });
+      el.addEventListener("pointerleave", hideTooltip);
+      el.addEventListener("focus", function(evt) {
+        var rect = el.getBoundingClientRect();
+        showTooltip({ clientX: rect.left + rect.width / 2, clientY: rect.top }, [
+          { text: d.name, strong: false },
+          { text: seg.label + ": " + seg.value + " (" + pct + "%)", strong: true }
+        ]);
+      });
+      el.addEventListener("blur", hideTooltip);
+      track.appendChild(el);
+      offsetPct += segWidthPct;
+    });
+
+    row.appendChild(track);
+    topicChart.appendChild(row);
+  });
+
+  // Weekly stacked column chart
+  var weeklyChart = document.getElementById("weeklyChart");
+  var maxWeekTotal = Math.max.apply(null, weeklyData.map(function(d) { return d.negative + d.neutral + d.positive; }));
+
+  weeklyData.forEach(function(d) {
+    var total = d.negative + d.neutral + d.positive;
+    var col = document.createElement("div");
+    col.className = "week-col";
+
+    var totalLabel = document.createElement("div");
+    totalLabel.className = "col-total";
+    totalLabel.textContent = total > 0 ? total : "";
+    col.appendChild(totalLabel);
+
+    var stack = document.createElement("div");
+    stack.className = "col-stack";
+    var heightPct = maxWeekTotal > 0 ? (total / maxWeekTotal) * 100 : 0;
+    stack.style.height = heightPct + "%";
+
+    var segments = [
+      { key: "negative", cls: "critical", value: d.negative, label: "Negative" },
+      { key: "neutral", cls: "neutral-seg", value: d.neutral, label: "Neutral" },
+      { key: "positive", cls: "good", value: d.positive, label: "Positive" }
+    ];
+    segments.forEach(function(seg) {
+      if (seg.value === 0 || total === 0) return;
+      var el = document.createElement("div");
+      el.className = "seg " + seg.cls;
+      el.style.height = ((seg.value / total) * 100) + "%";
+      el.tabIndex = 0;
+      el.addEventListener("pointermove", function(evt) {
+        showTooltip(evt, [
+          { text: d.label, strong: false },
+          { text: seg.label + ": " + seg.value, strong: true }
+        ]);
+      });
+      el.addEventListener("pointerleave", hideTooltip);
+      stack.appendChild(el);
+    });
+    col.appendChild(stack);
+
+    var label = document.createElement("div");
+    label.className = "week-label";
+    label.textContent = d.label;
+    col.appendChild(label);
+
+    weeklyChart.appendChild(col);
+  });
+})();
+</script>

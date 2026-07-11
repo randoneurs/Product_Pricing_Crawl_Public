@@ -1,0 +1,151 @@
+{
+  "telkomsel": [
+    {
+      "name": "Paket Bola Gembira Tier 1",
+      "price_rp": 25000,
+      "quota": "300MB",
+      "validity_days": 7,
+      "source": "Instagram @telkomsel"
+    },
+    {
+      "name": "Paket Bola Gembira Tier 2",
+      "price_rp": 85000,
+      "quota": "5.5GB",
+      "validity_days": 60,
+      "source": "Instagram @telkomsel"
+    },
+    {
+      "name": "Paket RoaMAX Pesta Bola",
+      "price_rp": 650000,
+      "quota": "155GB + 50 travel tokens",
+      "validity_days": 30,
+      "source": "Instagram @telkomsel",
+      "note": "USA/Canada/Mexico only"
+    },
+    {
+      "name": "Halo Optima 150K x iPhone 17e bundle",
+      "price_rp": 999000,
+      "quota": "150K/mo plan",
+      "validity_days": 365,
+      "source": "Instagram @telkomsel",
+      "note": "Billed over 6 months, 12-month plan"
+    }
+  ],
+  "indosat": [
+    {
+      "name": "Freedom X1 700MB",
+      "price_rp": 4550,
+      "quota": "700MB",
+      "validity_days": 1,
+      "source": "im3.id (Pulsa SOS rate card)"
+    },
+    {
+      "name": "Freedom X1 1GB",
+      "price_rp": 5950,
+      "quota": "1GB",
+      "validity_days": 1,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom Internet 1GB",
+      "price_rp": 7000,
+      "quota": "1GB",
+      "validity_days": 2,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom X1 2GB",
+      "price_rp": 7700,
+      "quota": "2GB",
+      "validity_days": 3,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom Internet 1.5GB",
+      "price_rp": 11900,
+      "quota": "1.5GB",
+      "validity_days": 3,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom Apps Entertainment 3GB",
+      "price_rp": 14000,
+      "quota": "3GB (apps)",
+      "validity_days": 7,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom X1 5GB",
+      "price_rp": 16800,
+      "quota": "5GB",
+      "validity_days": 7,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom Internet 3.5GB",
+      "price_rp": 19600,
+      "quota": "3.5GB",
+      "validity_days": 5,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom Internet 7GB",
+      "price_rp": 28000,
+      "quota": "7GB",
+      "validity_days": 7,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom Internet 3GB/30hr",
+      "price_rp": 32200,
+      "quota": "3GB",
+      "validity_days": 30,
+      "source": "im3.id"
+    },
+    {
+      "name": "Freedom Internet x ICONNET bundle (NEW)",
+      "price_rp": 0,
+      "quota": "12GB + 10000 min",
+      "validity_days": 30,
+      "source": "im3.id",
+      "note": "Free with ICONNET subscription, Jabodetabek only"
+    }
+  ],
+  "xlsmart": [
+    {
+      "name": "Xtra Combo Flex M",
+      "price_rp": 38000,
+      "quota": "undisclosed (user-picks in myXL)",
+      "validity_days": 30,
+      "source": "xl.co.id"
+    },
+    {
+      "name": "Xtra Combo Flex L",
+      "price_rp": 55000,
+      "quota": "undisclosed",
+      "validity_days": 30,
+      "source": "xl.co.id"
+    },
+    {
+      "name": "Xtra Combo Flex XL",
+      "price_rp": 75000,
+      "quota": "undisclosed",
+      "validity_days": 30,
+      "source": "xl.co.id"
+    },
+    {
+      "name": "Xtra Combo Flex XXL",
+      "price_rp": 90000,
+      "quota": "undisclosed",
+      "validity_days": 30,
+      "source": "xl.co.id"
+    },
+    {
+      "name": "Xtra Combo Flex XXXL",
+      "price_rp": 120000,
+      "quota": "undisclosed",
+      "validity_days": 30,
+      "source": "xl.co.id"
+    }
+  ]
+}

@@ -1,0 +1,866 @@
+<title>Telco Instagram Sentiment Benchmark</title>
+<style>
+  .viz-root {
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --card-surface:   #ffffff;
+
+    --status-good:     #0ca30c;
+    --status-critical: #d03b3b;
+    --status-neutral:  #898781;
+
+    --brand-xl:   #2a78d6;
+    --brand-ind:  #1baf7a;
+    --brand-tsel: #b8860a;
+
+    --neutral-wash:  rgba(137,135,129,0.14);
+    --critical-wash: rgba(208,59,59,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    .viz-root {
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --card-surface:   #201f1e;
+      --status-good:     #0ca30c;
+      --status-critical: #e66767;
+      --status-neutral:  #898781;
+      --brand-xl:   #3987e5;
+      --brand-ind:  #199e70;
+      --brand-tsel: #c98500;
+      --neutral-wash:  rgba(137,135,129,0.18);
+      --critical-wash: rgba(230,103,103,0.16);
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    --surface-1: #1a1a19; --page-plane: #0d0d0d; --text-primary: #ffffff; --text-secondary: #c3c2b7;
+    --text-muted: #898781; --gridline: #2c2c2a; --baseline: #383835; --border: rgba(255,255,255,0.10);
+    --card-surface: #201f1e; --status-good: #0ca30c; --status-critical: #e66767; --status-neutral: #898781;
+    --brand-xl: #3987e5; --brand-ind: #199e70; --brand-tsel: #c98500;
+    --neutral-wash: rgba(137,135,129,0.18); --critical-wash: rgba(230,103,103,0.16);
+  }
+  :root[data-theme="light"] .viz-root {
+    --surface-1: #fcfcfb; --page-plane: #f9f9f7; --text-primary: #0b0b0b; --text-secondary: #52514e;
+    --text-muted: #898781; --gridline: #e1e0d9; --baseline: #c3c2b7; --border: rgba(11,11,11,0.10);
+    --card-surface: #ffffff; --status-good: #0ca30c; --status-critical: #d03b3b; --status-neutral: #898781;
+    --brand-xl: #2a78d6; --brand-ind: #1baf7a; --brand-tsel: #b8860a;
+    --neutral-wash: rgba(137,135,129,0.14); --critical-wash: rgba(208,59,59,0.10);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  .viz-root {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane); color: var(--text-primary);
+    min-height: 100vh; padding: 32px 20px 64px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  header.page-head { margin-bottom: 28px; }
+  header.page-head h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+  header.page-head p { font-size: 14px; color: var(--text-secondary); margin: 0; max-width: 780px; line-height: 1.5; }
+
+  .card {
+    background: var(--card-surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 22px; margin-bottom: 20px;
+  }
+  .card h2 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+  .card .card-sub { font-size: 12.5px; color: var(--text-muted); margin: 0 0 18px; }
+
+  /* brand KPI row */
+  .brand-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  .brand-card {
+    background: var(--card-surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; border-top: 4px solid var(--bc);
+  }
+  .brand-card.xl { --bc: var(--brand-xl); }
+  .brand-card.ind { --bc: var(--brand-ind); }
+  .brand-card.tsel { --bc: var(--brand-tsel); }
+  .brand-card .brand-name { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .brand-card .metric-row { display:flex; justify-content: space-between; align-items:baseline; margin-bottom: 6px; font-size: 12.5px; }
+  .brand-card .metric-row .v { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .brand-card .metric-row .v.pos { color: var(--status-good); }
+  .brand-card .metric-row .v.neg { color: var(--status-critical); }
+  .brand-card .pain { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+  /* legend */
+  .legend { display:flex; gap:18px; flex-wrap: wrap; margin-bottom: 16px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend .item { display:flex; align-items:center; gap:6px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; flex:none; }
+  .legend .swatch.good { background: var(--status-good); }
+  .legend .swatch.critical { background: var(--status-critical); }
+  .legend .swatch.neutral-sw { background: var(--status-neutral); }
+  .legend .swatch.xl { background: var(--brand-xl); }
+  .legend .swatch.ind { background: var(--brand-ind); }
+  .legend .swatch.tsel { background: var(--brand-tsel); }
+
+  /* generic stacked/grouped bar rows */
+  .bar-row { margin-bottom: 16px; }
+  .bar-row:last-child { margin-bottom: 0; }
+  .bar-row-head { display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .bar-row-head .name { font-size: 13.5px; font-weight: 600; }
+  .bar-row-head .count { font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .stack-track { position: relative; height: 22px; width: 100%; }
+  .stack-seg { position: absolute; top: 0; height: 22px; border-radius: 4px; cursor: pointer; transition: filter 0.1s ease; }
+  .stack-seg:hover, .stack-seg:focus { filter: brightness(1.12); outline: none; }
+  .stack-seg.good { background: var(--status-good); }
+  .stack-seg.critical { background: var(--status-critical); }
+  .stack-seg.neutral-seg { background: var(--status-neutral); }
+
+  /* grouped mini-bars (topic share / neg-rate comparison) */
+  .group-block { margin-bottom: 18px; }
+  .group-block:last-child { margin-bottom: 0; }
+  .group-title { font-size: 13.5px; font-weight: 600; margin-bottom: 8px; }
+  .group-bars { display: flex; flex-direction: column; gap: 4px; }
+  .mini-bar-row { display: flex; align-items: center; gap: 8px; }
+  .mini-bar-row .mlabel { width: 78px; font-size: 11px; color: var(--text-muted); flex: none; }
+  .mini-bar-track { flex: 1; height: 14px; background: var(--neutral-wash); border-radius: 3px; position: relative; overflow: visible; }
+  .mini-bar-fill { position: absolute; left: 0; top: 0; height: 14px; border-radius: 3px; cursor: pointer; }
+  .mini-bar-fill.xl { background: var(--brand-xl); }
+  .mini-bar-fill.ind { background: var(--brand-ind); }
+  .mini-bar-fill.tsel { background: var(--brand-tsel); }
+  .mini-bar-val { font-size: 11px; color: var(--text-muted); width: 40px; text-align: right; flex: none; font-variant-numeric: tabular-nums; }
+
+  /* weekly line chart */
+  .line-chart-wrap { position: relative; height: 240px; }
+  svg.line-chart { width: 100%; height: 100%; overflow: visible; }
+  .line-path { fill: none; stroke-width: 2; }
+  .line-path.xl { stroke: var(--brand-xl); }
+  .line-path.ind { stroke: var(--brand-ind); }
+  .line-path.tsel { stroke: var(--brand-tsel); }
+  .line-dot { cursor: pointer; }
+  .line-dot.xl { fill: var(--brand-xl); }
+  .line-dot.ind { fill: var(--brand-ind); }
+  .line-dot.tsel { fill: var(--brand-tsel); }
+  .axis-label { font-size: 10px; fill: var(--text-muted); }
+  .gridline { stroke: var(--gridline); stroke-width: 1; }
+
+  /* tooltip */
+  .viz-tooltip {
+    position: fixed; pointer-events: none; z-index: 50;
+    background: var(--text-primary); color: var(--card-surface);
+    font-size: 12px; padding: 7px 10px; border-radius: 6px;
+    line-height: 1.4; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    opacity: 0; transform: translate(-50%, calc(-100% - 10px));
+    transition: opacity 0.08s ease; max-width: 240px;
+  }
+  .viz-tooltip.show { opacity: 1; }
+  .viz-tooltip b { font-weight: 700; }
+
+  /* quotes */
+  .quote-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .quote-col-title { font-size: 13px; font-weight: 700; margin: 0 0 8px; display:flex; align-items:center; gap:6px; }
+  .quote-col-title .dot { width: 9px; height: 9px; border-radius: 50%; display:inline-block; }
+  .quote-col-title .dot.xl { background: var(--brand-xl); }
+  .quote-col-title .dot.ind { background: var(--brand-ind); }
+  .quote-col-title .dot.tsel { background: var(--brand-tsel); }
+  .quote-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+    background: var(--surface-1);
+  }
+  .quote-card p { font-size: 12.5px; line-height: 1.5; margin: 0 0 8px; color: var(--text-primary); }
+  .quote-meta { display:flex; gap: 8px; align-items:center; flex-wrap: wrap; }
+  .badge { font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; color: var(--text-secondary); background: var(--neutral-wash); }
+  .badge.flag { color: var(--status-critical); background: var(--critical-wash); }
+
+  footer.notes { margin-top: 8px; }
+  footer.notes ul { margin: 8px 0 0; padding-left: 18px; }
+  footer.notes li { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 4px; }
+
+  /* ask-the-data card */
+  .ask-form { display: flex; gap: 8px; margin-bottom: 12px; }
+  .ask-input {
+    flex: 1; font-size: 13.5px; font-family: inherit; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-1); color: var(--text-primary);
+  }
+  .ask-input:focus { outline: 2px solid var(--brand-xl); outline-offset: 1px; }
+  .ask-submit {
+    font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 8px; border: none;
+    background: var(--text-primary); color: var(--card-surface); cursor: pointer; flex: none;
+  }
+  .ask-submit:hover { opacity: 0.9; }
+  .ask-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .ask-chip {
+    font-size: 12px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface-1); color: var(--text-secondary); cursor: pointer;
+  }
+  .ask-chip:hover { background: var(--neutral-wash); color: var(--text-primary); }
+  .ask-answer {
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+    background: var(--surface-1); font-size: 13.5px; line-height: 1.6; color: var(--text-primary);
+    min-height: 24px;
+  }
+  .ask-answer .aa-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); margin-bottom: 6px; }
+  .ask-answer ul { margin: 6px 0 0; padding-left: 18px; }
+  .ask-answer li { margin-bottom: 3px; }
+  .ask-note { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; }
+
+  /* priority actions card */
+  .priority-list { display: flex; flex-direction: column; gap: 12px; }
+  .priority-item { display: flex; gap: 14px; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--surface-1); }
+  .priority-rank {
+    flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--status-critical);
+    color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center;
+  }
+  .priority-item.rank-4 .priority-rank { background: var(--status-neutral); }
+  .priority-body h3 { font-size: 13.5px; font-weight: 700; margin: 0 0 4px; }
+  .priority-stats { font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+  .priority-body ul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.55; }
+  .priority-body li { margin-bottom: 3px; }
+  .priority-keep {
+    border: 1px dashed var(--border); border-radius: 10px; padding: 12px 16px; margin-top: 4px;
+    font-size: 12.5px; color: var(--text-secondary); background: var(--neutral-wash);
+  }
+  .priority-keep b { color: var(--text-primary); }
+
+  @media (max-width: 800px) {
+    .brand-row { grid-template-columns: 1fr; }
+    .quote-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="viz-root">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>Telco Instagram Sentiment Benchmark — XLSMART vs Indosat vs Telkomsel</h1>
+      <p>987 customer comments across 102 posts, scraped from @xlsmart, @indosat and @telkomsel via Apify (mid-May–10 Jul 2026) and classified by sentiment and topic. Excludes each brand's own customer-service reply comments.</p>
+    </header>
+
+    <div class="brand-row">
+      <div class="brand-card xl">
+        <div class="brand-name">XLSMART</div>
+        <div class="metric-row"><span>Comments</span><span class="v">173</span></div>
+        <div class="metric-row"><span>Net sentiment</span><span class="v pos">+7.5%</span></div>
+        <div class="metric-row"><span>Positive / Negative</span><span class="v">45% / 38%</span></div>
+        <div class="pain">Top pain point: Network Experience — 41% of all comments, 65% negative</div>
+      </div>
+      <div class="brand-card ind">
+        <div class="brand-name">Indosat (IOH)</div>
+        <div class="metric-row"><span>Comments</span><span class="v">180</span></div>
+        <div class="metric-row"><span>Net sentiment</span><span class="v pos">+7.2%</span></div>
+        <div class="metric-row"><span>Positive / Negative</span><span class="v">40% / 33%</span></div>
+        <div class="pain">Top pain point: Network Experience — 18% of comments, 85% negative</div>
+      </div>
+      <div class="brand-card tsel">
+        <div class="brand-name">Telkomsel</div>
+        <div class="metric-row"><span>Comments</span><span class="v">634</span></div>
+        <div class="metric-row"><span>Net sentiment</span><span class="v neg">-6.5%</span></div>
+        <div class="metric-row"><span>Positive / Negative</span><span class="v">36% / 43%</span></div>
+        <div class="pain">Worst across every operational topic: network, pricing, CS and app all &gt;65% negative</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Overall sentiment by brand</h2>
+      <p class="card-sub">Bar length = total comments; segments show sentiment split.</p>
+      <div class="legend">
+        <span class="item"><span class="swatch critical"></span>Negative</span>
+        <span class="item"><span class="swatch neutral-sw"></span>Neutral</span>
+        <span class="item"><span class="swatch good"></span>Positive</span>
+      </div>
+      <div id="sentimentByBrand"></div>
+    </div>
+
+    <div class="card">
+      <h2>What people talk about, by brand</h2>
+      <p class="card-sub">Share of each brand's comments falling in each topic category. Bars compare brands within a topic — read down a topic to see who talks about it more.</p>
+      <div class="legend">
+        <span class="item"><span class="swatch xl"></span>XLSMART</span>
+        <span class="item"><span class="swatch ind"></span>Indosat</span>
+        <span class="item"><span class="swatch tsel"></span>Telkomsel</span>
+      </div>
+      <div id="topicShareChart"></div>
+    </div>
+
+    <div class="card">
+      <h2>Negative rate on operational topics</h2>
+      <p class="card-sub">Within each topic, % of that brand's comments that are negative. Higher = more complaints relative to that topic's own volume. Small-n topics (XLSMART/Indosat Customer Service &amp; App &amp; Account have under 10 comments) are noisy — read as directional, not precise.</p>
+      <div class="legend">
+        <span class="item"><span class="swatch xl"></span>XLSMART</span>
+        <span class="item"><span class="swatch ind"></span>Indosat</span>
+        <span class="item"><span class="swatch tsel"></span>Telkomsel</span>
+      </div>
+      <div id="negRateChart"></div>
+    </div>
+
+    <div class="card">
+      <h2>Weekly negative-comment rate</h2>
+      <p class="card-sub">% of that week's comments classified negative, per brand. Gaps mean no posts (and so no comments) that week.</p>
+      <div class="legend">
+        <span class="item"><span class="swatch xl"></span>XLSMART</span>
+        <span class="item"><span class="swatch ind"></span>Indosat</span>
+        <span class="item"><span class="swatch tsel"></span>Telkomsel</span>
+      </div>
+      <div class="line-chart-wrap"><svg class="line-chart" id="weeklyLineChart"></svg></div>
+    </div>
+
+    <div class="card">
+      <h2>Ask about the data</h2>
+      <p class="card-sub">Type a question about any brand, topic, or comparison. Answers are computed instantly from the dataset on this page — not a live AI call — so they're limited to what's charted above.</p>
+      <div class="ask-form">
+        <input type="text" class="ask-input" id="askInput" placeholder="e.g. Which brand has the worst network sentiment?" />
+        <button class="ask-submit" id="askSubmit">Ask</button>
+      </div>
+      <div class="ask-chips" id="askChips"></div>
+      <div class="ask-answer" id="askAnswer">
+        <div class="aa-label">Try a question above</div>
+        <div>I can compare brands, break down a topic, or summarize a single brand's sentiment — all from the 987 comments analyzed on this page.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Top complaint per brand</h2>
+      <p class="card-sub">Representative negative quotes — illustrative, not exhaustive.</p>
+      <div class="quote-grid">
+        <div>
+          <p class="quote-col-title"><span class="dot xl"></span>XLSMART</p>
+          <div class="quote-card">
+            <p>"APASIH GA GUNA BENERIN TUH JARINGAN SEKARANG JELEK WOII XL INI GA GUNA DARI DULU GADA PERUBAHAN MIKIR DUIT DUIT DOANG WOII JAWA BARAT JELEK"</p>
+            <div class="quote-meta"><span class="badge">Network Experience</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"MANA SMARTFREN SIGNAL SAYA 3 HARI LOH 1 BATANG! KALIAN BENER'YA BIKIN SAYA RUGI... HARUS BNER' VIRAL DLU?"</p>
+            <div class="quote-meta"><span class="badge">Network Experience</span><span class="badge flag">posted 10×</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="quote-col-title"><span class="dot ind"></span>Indosat (IOH)</p>
+          <div class="quote-card">
+            <p>"bad jaringan, kalo ganiat bikin jaringan gausah bikin, ngeleg banget gini buseng dah. main game sampe kaga gerak, rasanya pengen banting hape."</p>
+            <div class="quote-meta"><span class="badge">Network Experience</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"Saya cinta banget ama Im3... Hi-Fi... isinya keluhan semua. Tolong jaga Hak customer kalian. Sumpah Hi-Fi itu buang uang saja."</p>
+            <div class="quote-meta"><span class="badge">Customer Service</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="quote-col-title"><span class="dot tsel"></span>Telkomsel</p>
+          <div class="quote-card">
+            <p>"Hari ke-5. Masih menunggu 'manajer senior' yang dijanjikan Telkomsel akan menelepon saya... 10.500 poin yang tidak pernah bisa saya gunakan..."</p>
+            <div class="quote-meta"><span class="badge">Customer Service</span><span class="badge flag">7 variants, 23 posts</span></div>
+          </div>
+          <div class="quote-card">
+            <p>"paket internet 1 hari tapi kenyataannya cuma 12 jam. Tidak ada keterangan... Bikin paket nggak jelas banget, tapi dijual?????"</p>
+            <div class="quote-meta"><span class="badge">Package &amp; Pricing</span><span class="badge flag">6 variants, 23 posts</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Prioritized actions for Telkomsel</h2>
+      <p class="card-sub">Ranked by raw negative-comment volume among actionable topics (Telkomsel is the only brand with net-negative sentiment, so it's the one with a clear improvement case). "Other" and near-zero-complaint topics (Corporate &amp; Brand, Events &amp; CSR) are excluded from ranking — they aren't the problem.</p>
+      <div class="priority-list">
+        <div class="priority-item rank-1">
+          <div class="priority-rank">1</div>
+          <div class="priority-body">
+            <h3>Package &amp; Pricing — clarify what's actually being sold</h3>
+            <div class="priority-stats">90 comments · 86% negative · 77 negative comments (highest of any topic)</div>
+            <ul>
+              <li>Fix or clearly disclose the "1-day internet package = 12 hours only" gap — this single complaint was posted 23 times across 6 wordings, the single largest recurring theme in the dataset.</li>
+              <li>Disclose the 28-day billing cycle up front (several comments expect "30 hari" and feel shorted).</li>
+              <li>Investigate "pulsa tersedot" reports — multiple independent comments describe balance draining with no matching purchase.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="priority-item rank-2">
+          <div class="priority-rank">2</div>
+          <div class="priority-body">
+            <h3>Customer Service — stop escalations from going public and viral</h3>
+            <div class="priority-stats">95 comments · 79% negative · 75 negative comments</div>
+            <ul>
+              <li>The "senior manager never called back" / Telkomsel Poin complaint was posted 23 times across 7 wordings (including English, aimed at international visibility) — a single unresolved case amplified into the dataset's most repeated complaint. Fast-track visible unresolved tickets before they get reposted.</li>
+              <li>Several comments say the DM assistant ("Vero" AI) never routes to a human — review the bot-to-agent handoff criteria.</li>
+              <li>Audit the Telkomsel Poin redemption flow specifically; it's named directly in multiple complaints as broken.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="priority-item rank-3">
+          <div class="priority-rank">3</div>
+          <div class="priority-body">
+            <h3>Network Experience — target power-outage drop-outs and event-day load</h3>
+            <div class="priority-stats">75 comments · 87% negative (highest negative rate of the four) · 65 negative comments</div>
+            <ul>
+              <li>Multiple independent comments report signal dropping specifically when local power ("mati lampu") goes out — check backup power/battery runtime at affected BTS sites.</li>
+              <li>World Cup/MaxStream streaming complaints cluster with signal complaints during live matches — confirm backhaul capacity for high-profile streaming events.</li>
+              <li>Repeated city/district-level "when is 5G coming" requests suggest a public rollout roadmap would reduce repeat complaints even where no fix is imminent.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="priority-item rank-4">
+          <div class="priority-rank">4</div>
+          <div class="priority-body">
+            <h3>App &amp; Account — unblock people who already paid</h3>
+            <div class="priority-stats">32 comments · 69% negative · 22 negative comments (lowest volume of the four, still worth fixing)</div>
+            <ul>
+              <li>OTP delivery delays/failures block registration and number reactivation in several comments.</li>
+              <li>eSIM QR-code delivery delays leave paying customers unable to activate — prioritize fixes on the post-purchase activation path specifically.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="priority-keep">
+        <b>Keep doing:</b> Corporate &amp; Brand and Events &amp; CSR content (World Cup nobar events, UMKM/CSR campaigns, company-anniversary posts) together run 83% positive and only 3.5% negative — Corporate &amp; Brand posts alone are 92% positive, while Events &amp; CSR skews more neutral (fans naming World Cup teams) than negative. Either way, this content is what's holding Telkomsel's overall sentiment up despite the operational issues above, so don't deprioritize it while fixing the rest.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:12px;">Methodology &amp; caveats</h2>
+      <footer class="notes">
+        <ul>
+          <li>Same pipeline across all three brands: Apify's <code>instagram-scraper</code> actor pulled posts from the last ~30 days, then comments per post (capped ~15/post on the free tier), via the same script used for the original XLSMART run.</li>
+          <li>Every unique comment text was individually read and labeled by hand for sentiment and topic — not a keyword classifier. For Telkomsel's much larger volume (634 raw comments), exact-duplicate text was labeled once and applied to all repeats, and the 176 comments made up only of emoji/symbols (no letters) were bulk-tagged Corporate &amp; Brand / positive rather than read individually.</li>
+          <li>Each brand's own official reply comments were excluded; for Telkomsel and Indosat no official replies were detected in-window, for XLSMART 5 were removed.</li>
+          <li>Volumes differ a lot by brand (173 / 180 / 634) — normalized shares (%) are more comparable across brands than raw counts. Telkomsel's larger post count (55 vs. 31 and 16) is itself a difference in posting cadence, not just audience size.</li>
+          <li>Several near-identical complaints were posted repeatedly by the same or coordinated accounts (XLSMART's 10× signal-outage comment, Indosat's 11× spam-call template, Telkomsel's "senior manager" escalation posted 23 times across 7 wording variants, and its "12-hour package" complaint posted 23 times across 6 variants) — each is counted as written, so treat these as concentrated single incidents amplifying a topic's negative share, not as independent customer voices.</li>
+          <li>A handful of Telkomsel/Indosat comments were off-topic spam (land-dispute legal letters, debt-collection call-outs, bank-voting contest entries) and were bucketed as "Other" rather than forced into a telco topic.</li>
+        </ul>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<div class="viz-tooltip" id="vizTooltip"></div>
+
+<script>
+(function() {
+  var tooltip = document.getElementById("vizTooltip");
+  function showTooltip(evt, lines) {
+    tooltip.innerHTML = "";
+    lines.forEach(function(p) {
+      var div = document.createElement("div");
+      if (p.strong) {
+        var b = document.createElement("b");
+        b.textContent = p.text;
+        div.appendChild(b);
+      } else {
+        div.appendChild(document.createTextNode(p.text));
+      }
+      tooltip.appendChild(div);
+    });
+    tooltip.style.left = evt.clientX + "px";
+    tooltip.style.top = evt.clientY + "px";
+    tooltip.classList.add("show");
+  }
+  function hideTooltip() { tooltip.classList.remove("show"); }
+
+  var brandMeta = {
+    xl:   { label: "XLSMART",       cls: "xl" },
+    ind:  { label: "Indosat (IOH)", cls: "ind" },
+    tsel: { label: "Telkomsel",     cls: "tsel" }
+  };
+
+  // ---- 1. Overall sentiment by brand (stacked bars) ----
+  var sentimentData = [
+    { key: "xl",   name: "XLSMART",       negative: 65,  neutral: 30,  positive: 78 },
+    { key: "ind",  name: "Indosat (IOH)", negative: 59,  neutral: 49,  positive: 72 },
+    { key: "tsel", name: "Telkomsel",     negative: 270, neutral: 135, positive: 229 }
+  ];
+  var sentimentChart = document.getElementById("sentimentByBrand");
+  var maxSentTotal = Math.max.apply(null, sentimentData.map(function(d) { return d.negative + d.neutral + d.positive; }));
+
+  sentimentData.forEach(function(d) {
+    var total = d.negative + d.neutral + d.positive;
+    var row = document.createElement("div");
+    row.className = "bar-row";
+
+    var head = document.createElement("div");
+    head.className = "bar-row-head";
+    var name = document.createElement("span");
+    name.className = "name";
+    name.textContent = d.name;
+    var count = document.createElement("span");
+    count.className = "count";
+    count.textContent = total + " comments";
+    head.appendChild(name);
+    head.appendChild(count);
+    row.appendChild(head);
+
+    var track = document.createElement("div");
+    track.className = "stack-track";
+
+    var segments = [
+      { cls: "critical", value: d.negative, label: "Negative" },
+      { cls: "neutral-seg", value: d.neutral, label: "Neutral" },
+      { cls: "good", value: d.positive, label: "Positive" }
+    ];
+    var offsetPct = 0;
+    var trackWidthPct = (total / maxSentTotal) * 100;
+    segments.forEach(function(seg) {
+      if (seg.value === 0) return;
+      var segWidthPct = (seg.value / total) * trackWidthPct;
+      var el = document.createElement("div");
+      el.className = "stack-seg " + seg.cls;
+      el.style.left = offsetPct + "%";
+      el.style.width = segWidthPct + "%";
+      el.tabIndex = 0;
+      var pct = Math.round((seg.value / total) * 100);
+      el.addEventListener("pointermove", function(evt) {
+        showTooltip(evt, [{ text: d.name, strong: false }, { text: seg.label + ": " + seg.value + " (" + pct + "%)", strong: true }]);
+      });
+      el.addEventListener("pointerleave", hideTooltip);
+      track.appendChild(el);
+      offsetPct += segWidthPct;
+    });
+    row.appendChild(track);
+    sentimentChart.appendChild(row);
+  });
+
+  // ---- 2. Topic share by brand (grouped mini-bars) ----
+  var topicShare = [
+    { topic: "Network Experience", xl: 41.0, ind: 18.3, tsel: 11.8 },
+    { topic: "Corporate & Brand",  xl: 24.9, ind: 35.6, tsel: 28.9 },
+    { topic: "Events & CSR",       xl: 18.5, ind: 11.7, tsel: 12.1 },
+    { topic: "Customer Service",   xl: 4.0,  ind: 17.8, tsel: 15.0 },
+    { topic: "Package & Pricing",  xl: 5.8,  ind: 2.8,  tsel: 14.2 },
+    { topic: "Other",              xl: 4.6,  ind: 11.7, tsel: 12.9 },
+    { topic: "App & Account",      xl: 1.2,  ind: 2.2,  tsel: 5.0 }
+  ];
+  var topicCounts = {
+    "Network Experience": { xl: 71, ind: 33, tsel: 75 },
+    "Corporate & Brand":  { xl: 43, ind: 64, tsel: 183 },
+    "Events & CSR":       { xl: 32, ind: 21, tsel: 77 },
+    "Customer Service":   { xl: 7,  ind: 32, tsel: 95 },
+    "Package & Pricing":  { xl: 10, ind: 5,  tsel: 90 },
+    "Other":              { xl: 8,  ind: 21, tsel: 82 },
+    "App & Account":      { xl: 2,  ind: 4,  tsel: 32 }
+  };
+  renderGroupedMiniBars("topicShareChart", topicShare, "topic", function(v) { return v.toFixed(1) + "%"; },
+    function(brandKey, row) { return topicCounts[row.topic][brandKey] + " comments (" + row[brandKey].toFixed(1) + "% of " + brandMeta[brandKey].label + ")"; });
+
+  // ---- 3. Negative rate on operational topics ----
+  var negRate = [
+    { topic: "Network Experience", xl: 64.8, ind: 84.8, tsel: 86.7 },
+    { topic: "Package & Pricing",  xl: 80.0, ind: 80.0, tsel: 85.6 },
+    { topic: "Customer Service",   xl: 100.0, ind: 59.4, tsel: 78.9 },
+    { topic: "App & Account",      xl: 100.0, ind: 100.0, tsel: 68.8 }
+  ];
+  var negCounts = {
+    "Network Experience": { xl: [46,71], ind: [28,33], tsel: [65,75] },
+    "Package & Pricing":  { xl: [8,10],  ind: [4,5],   tsel: [77,90] },
+    "Customer Service":   { xl: [7,7],   ind: [19,32], tsel: [75,95] },
+    "App & Account":      { xl: [2,2],   ind: [4,4],   tsel: [22,32] }
+  };
+  renderGroupedMiniBars("negRateChart", negRate, "topic", function(v) { return v.toFixed(0) + "%"; },
+    function(brandKey, row) {
+      var c = negCounts[row.topic][brandKey];
+      return c[0] + " of " + c[1] + " " + row.topic.toLowerCase() + " comments (" + brandMeta[brandKey].label + ") are negative";
+    });
+
+  function renderGroupedMiniBars(containerId, data, labelField, fmt, tooltipFn) {
+    var container = document.getElementById(containerId);
+    var brandKeys = ["xl", "ind", "tsel"];
+    data.forEach(function(row) {
+      var block = document.createElement("div");
+      block.className = "group-block";
+      var title = document.createElement("div");
+      title.className = "group-title";
+      title.textContent = row[labelField];
+      block.appendChild(title);
+
+      var bars = document.createElement("div");
+      bars.className = "group-bars";
+      brandKeys.forEach(function(bk) {
+        var value = row[bk];
+        var barRow = document.createElement("div");
+        barRow.className = "mini-bar-row";
+
+        var mlabel = document.createElement("div");
+        mlabel.className = "mlabel";
+        mlabel.textContent = brandMeta[bk].label;
+        barRow.appendChild(mlabel);
+
+        var trackEl = document.createElement("div");
+        trackEl.className = "mini-bar-track";
+        var fill = document.createElement("div");
+        fill.className = "mini-bar-fill " + brandMeta[bk].cls;
+        fill.style.width = Math.min(value, 100) + "%";
+        fill.tabIndex = 0;
+        fill.addEventListener("pointermove", function(evt) {
+          showTooltip(evt, [{ text: tooltipFn(bk, row), strong: true }]);
+        });
+        fill.addEventListener("pointerleave", hideTooltip);
+        trackEl.appendChild(fill);
+        barRow.appendChild(trackEl);
+
+        var valEl = document.createElement("div");
+        valEl.className = "mini-bar-val";
+        valEl.textContent = fmt(value);
+        barRow.appendChild(valEl);
+
+        bars.appendChild(barRow);
+      });
+      block.appendChild(bars);
+      container.appendChild(block);
+    });
+  }
+
+  // ---- 4. Weekly negative-rate trend (line chart) ----
+  var weeks = ["12–18 May","19–25 May","26 May–1 Jun","2–8 Jun","9–15 Jun","16–22 Jun","23–29 Jun","30 Jun–6 Jul","7–13 Jul"];
+  var weekly = {
+    xl:   [50, 64, null, null, 25, 82, 26, 15, 0],
+    ind:  [20, null, null, null, 50, 32, 30, 39, null],
+    tsel: [null, null, null, null, 48, 31, 36, 54, 27]
+  };
+
+  var svg = document.getElementById("weeklyLineChart");
+  var svgNS = "http://www.w3.org/2000/svg";
+  var W = 1000, H = 220, padL = 34, padR = 10, padT = 10, padB = 34;
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("preserveAspectRatio", "none");
+
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  var xStep = plotW / (weeks.length - 1);
+
+  [0, 25, 50, 75, 100].forEach(function(v) {
+    var y = padT + plotH - (v / 100) * plotH;
+    var line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", padL); line.setAttribute("x2", W - padR);
+    line.setAttribute("y1", y); line.setAttribute("y2", y);
+    line.setAttribute("class", "gridline");
+    svg.appendChild(line);
+    var label = document.createElementNS(svgNS, "text");
+    label.setAttribute("x", padL - 6); label.setAttribute("y", y + 3);
+    label.setAttribute("text-anchor", "end");
+    label.setAttribute("class", "axis-label");
+    label.textContent = v + "%";
+    svg.appendChild(label);
+  });
+
+  weeks.forEach(function(w, i) {
+    var x = padL + i * xStep;
+    var label = document.createElementNS(svgNS, "text");
+    label.setAttribute("x", x); label.setAttribute("y", H - 8);
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("class", "axis-label");
+    label.textContent = w;
+    svg.appendChild(label);
+  });
+
+  ["xl", "ind", "tsel"].forEach(function(bk) {
+    var series = weekly[bk];
+    var points = [];
+    series.forEach(function(v, i) {
+      if (v === null) return;
+      var x = padL + i * xStep;
+      var y = padT + plotH - (v / 100) * plotH;
+      points.push([x, y, v, i]);
+    });
+
+    var segStart = null;
+    for (var i = 0; i < points.length; i++) {
+      if (segStart === null) { segStart = points[i]; continue; }
+      var prev = points[i - 1];
+      var cur = points[i];
+      if (cur[3] === prev[3] + 1) {
+        var path = document.createElementNS(svgNS, "line");
+        path.setAttribute("x1", prev[0]); path.setAttribute("y1", prev[1]);
+        path.setAttribute("x2", cur[0]); path.setAttribute("y2", cur[1]);
+        path.setAttribute("class", "line-path " + brandMeta[bk].cls);
+        svg.appendChild(path);
+      }
+    }
+
+    points.forEach(function(p) {
+      var dot = document.createElementNS(svgNS, "circle");
+      dot.setAttribute("cx", p[0]); dot.setAttribute("cy", p[1]); dot.setAttribute("r", 4);
+      dot.setAttribute("class", "line-dot " + brandMeta[bk].cls);
+      dot.addEventListener("pointermove", function(evt) {
+        showTooltip(evt, [
+          { text: brandMeta[bk].label + " — " + weeks[p[3]], strong: false },
+          { text: p[2] + "% negative", strong: true }
+        ]);
+      });
+      dot.addEventListener("pointerleave", hideTooltip);
+      svg.appendChild(dot);
+    });
+  });
+
+  // ---- 5. Ask about the data (local Q&A over the dataset above — no external AI call) ----
+  var KB = {
+    brands: {
+      xl:   { label: "XLSMART",       total: 173, positive: 78,  negative: 65,  neutral: 30,  net: 7.5,  posts: 31 },
+      ind:  { label: "Indosat (IOH)", total: 180, positive: 72,  negative: 59,  neutral: 49,  net: 7.2,  posts: 16 },
+      tsel: { label: "Telkomsel",     total: 634, positive: 229, negative: 270, neutral: 135, net: -6.5, posts: 55 }
+    },
+    topics: {
+      network:  { label: "Network Experience", xl: {p:6,n:46,u:19,t:71},  ind: {p:0,n:28,u:5,t:33},  tsel: {p:6,n:65,u:4,t:75} },
+      pricing:  { label: "Package & Pricing",   xl: {p:0,n:8,u:2,t:10},   ind: {p:0,n:4,u:1,t:5},    tsel: {p:5,n:77,u:8,t:90} },
+      cs:       { label: "Customer Service",    xl: {p:0,n:7,u:0,t:7},    ind: {p:0,n:19,u:13,t:32}, tsel: {p:1,n:75,u:19,t:95} },
+      app:      { label: "App & Account",       xl: {p:0,n:2,u:0,t:2},    ind: {p:0,n:4,u:0,t:4},    tsel: {p:2,n:22,u:8,t:32} },
+      brand:    { label: "Corporate & Brand",    xl: {p:40,n:1,u:2,t:43},  ind: {p:54,n:0,u:10,t:64}, tsel: {p:168,n:8,u:7,t:183} },
+      events:   { label: "Events & CSR",         xl: {p:32,n:0,u:0,t:32},  ind: {p:18,n:1,u:2,t:21},  tsel: {p:47,n:1,u:29,t:77} },
+      other:    { label: "Other",                xl: {p:0,n:1,u:7,t:8},    ind: {p:0,n:3,u:18,t:21},  tsel: {p:0,n:22,u:60,t:82} }
+    },
+    quotes: {
+      xl:   "\"APASIH GA GUNA BENERIN TUH JARINGAN SEKARANG JELEK WOII XL INI GA GUNA DARI DULU...\" (Network Experience)",
+      ind:  "\"bad jaringan, kalo ganiat bikin jaringan gausah bikin, ngeleg banget gini buseng dah...\" (Network Experience)",
+      tsel: "\"Hari ke-5. Masih menunggu 'manajer senior' yang dijanjikan Telkomsel...\" — posted 23 times across 7 wordings (Customer Service)"
+    },
+    priorityTopics: ["pricing", "cs", "network", "app"]
+  };
+
+  var topicKeywords = {
+    network: ["network", "signal", "sinyal", "jaringan", "5g", "4g", "3g", "coverage", "lemot", "gangguan"],
+    pricing: ["pricing", "price", "paket", "harga", "kuota", "quota", "tarif", "pulsa", "cost", "billing", "package"],
+    cs:      ["customer service", "cs ", " cs", "service", "pelayanan", "complaint", "keluhan", "support", "care"],
+    app:     ["app", "aplikasi", "account", "registrasi", "otp", "esim", "e-sim", "login"],
+    brand:   ["corporate", "corporate & brand", "corporate and brand", "brand image", "brand content", "brand posts"],
+    events:  ["event", "csr", "sponsorship", "sponsor"],
+    other:   ["other", "spam", "off-topic"]
+  };
+  var brandKeywords = {
+    xl:   ["xlsmart", "xl smart", "xl "],
+    ind:  ["indosat", "ioh", "im3"],
+    tsel: ["telkomsel", "tsel"]
+  };
+
+  function pct(part, whole) { return whole === 0 ? 0 : Math.round((part / whole) * 1000) / 10; }
+
+  function findMatches(q, dict) {
+    var hits = [];
+    Object.keys(dict).forEach(function(key) {
+      dict[key].forEach(function(kw) {
+        if (q.indexOf(kw) !== -1 && hits.indexOf(key) === -1) hits.push(key);
+      });
+    });
+    return hits;
+  }
+
+  function sentimentSentence(label, s) {
+    return label + ": " + s.t + " comments — " + pct(s.p, s.t) + "% positive, " + pct(s.n, s.t) + "% negative, " + pct(s.u, s.t) + "% neutral.";
+  }
+
+  function rankBrandsByNet() {
+    var order = ["xl", "ind", "tsel"].slice().sort(function(a, b) { return KB.brands[b].net - KB.brands[a].net; });
+    return order;
+  }
+
+  function answerQuestion(raw) {
+    var q = raw.toLowerCase().trim();
+    if (!q) return { label: "Try a question above", html: "I can compare brands, break down a topic, or summarize a single brand's sentiment — all from the 987 comments analyzed on this page." };
+
+    var brandHits = findMatches(q, brandKeywords);
+    var topicHits = findMatches(q, topicKeywords);
+    var wantsAction = /priorit|improve|recommend|action|fix/.test(q);
+    var wantsQuote = /quote|example|complain(t|ing)? example/.test(q);
+    var wantsBest = /best|worst|rank|compare|which brand/.test(q);
+
+    // action / recommendation intent
+    if (wantsAction) {
+      var lines = KB.priorityTopics.map(function(tk, i) {
+        var t = KB.topics[tk];
+        return (i + 1) + ". " + t.label + " — " + t.tsel.n + " negative comments (" + pct(t.tsel.n, t.tsel.t) + "% of " + t.tsel.t + ")";
+      });
+      return {
+        label: "Telkomsel priority actions",
+        html: "Ranked by negative-comment volume:<ul>" + lines.map(function(l) { return "<li>" + l + "</li>"; }).join("") + "</ul>See the \"Prioritized actions for Telkomsel\" card below for specific fixes per topic."
+      };
+    }
+
+    // quote intent
+    if (wantsQuote && brandHits.length) {
+      var bk = brandHits[0];
+      return { label: KB.brands[bk].label + " — representative complaint", html: KB.quotes[bk] };
+    }
+
+    // brand + topic
+    if (brandHits.length && topicHits.length) {
+      var html = "";
+      topicHits.forEach(function(tk) {
+        var t = KB.topics[tk];
+        brandHits.forEach(function(bk) {
+          html += "<div>" + sentimentSentence(KB.brands[bk].label + " — " + t.label, t[bk]) + " (" + pct(t[bk].t, KB.brands[bk].total) + "% of " + KB.brands[bk].label + "'s comments)</div>";
+        });
+      });
+      return { label: "Topic breakdown", html: html };
+    }
+
+    // topic only — compare across brands
+    if (topicHits.length) {
+      var html = "";
+      topicHits.forEach(function(tk) {
+        var t = KB.topics[tk];
+        html += "<div style='margin-bottom:8px'><b>" + t.label + "</b><ul>" +
+          ["xl", "ind", "tsel"].map(function(bk) {
+            return "<li>" + sentimentSentence(KB.brands[bk].label, t[bk]) + "</li>";
+          }).join("") + "</ul></div>";
+      });
+      return { label: "Topic comparison across brands", html: html };
+    }
+
+    // brand only — overall sentiment
+    if (brandHits.length && !wantsBest) {
+      var html = brandHits.map(function(bk) {
+        var b = KB.brands[bk];
+        return "<div>" + sentimentSentence(b.label, { p: b.positive, n: b.negative, u: b.neutral, t: b.total }) + " Net sentiment: " + (b.net > 0 ? "+" : "") + b.net + "%.</div>";
+      }).join("");
+      return { label: "Brand summary", html: html };
+    }
+
+    // best/worst ranking, no specific brand/topic
+    if (wantsBest || (!brandHits.length && !topicHits.length)) {
+      var order = rankBrandsByNet();
+      var html = "<ul>" + order.map(function(bk, i) {
+        var b = KB.brands[bk];
+        return "<li>#" + (i + 1) + " " + b.label + " — net sentiment " + (b.net > 0 ? "+" : "") + b.net + "% (" + pct(b.positive, b.total) + "% positive, " + pct(b.negative, b.total) + "% negative)</li>";
+      }).join("") + "</ul>Telkomsel is the only brand with net-negative sentiment, driven by its Network, Pricing, CS and App topics all running &gt;65% negative.";
+      return { label: "Brand ranking by net sentiment", html: html };
+    }
+
+    return {
+      label: "Not sure how to answer that",
+      html: "Try mentioning a brand (XLSMART, Indosat, Telkomsel), a topic (network, pricing, customer service, app, events), or ask \"which brand is best/worst\"."
+    };
+  }
+
+  var askInput = document.getElementById("askInput");
+  var askSubmit = document.getElementById("askSubmit");
+  var askAnswer = document.getElementById("askAnswer");
+  var askChips = document.getElementById("askChips");
+
+  function renderAnswer(q) {
+    var res = answerQuestion(q);
+    askAnswer.innerHTML = "";
+    var labelEl = document.createElement("div");
+    labelEl.className = "aa-label";
+    labelEl.textContent = res.label;
+    var bodyEl = document.createElement("div");
+    bodyEl.innerHTML = res.html;
+    askAnswer.appendChild(labelEl);
+    askAnswer.appendChild(bodyEl);
+  }
+
+  askSubmit.addEventListener("click", function() { renderAnswer(askInput.value); });
+  askInput.addEventListener("keydown", function(e) { if (e.key === "Enter") renderAnswer(askInput.value); });
+
+  var suggestions = [
+    "Which brand has the best sentiment?",
+    "How is Telkomsel's network sentiment?",
+    "Compare customer service across brands",
+    "What should Telkomsel prioritize?",
+    "Show me a complaint example for Indosat"
+  ];
+  suggestions.forEach(function(s) {
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "ask-chip";
+    chip.textContent = s;
+    chip.addEventListener("click", function() { askInput.value = s; renderAnswer(s); });
+    askChips.appendChild(chip);
+  });
+})();
+</script>
