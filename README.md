@@ -10,15 +10,25 @@ XLSMART, refreshed daily by a scheduled Claude Code cloud routine.
 ## Data sources
 - Official Instagram accounts (@telkomsel, @indosat, @xlsmart) — Apify
   `instagram-scraper`, posts + comments
-- Official websites (telkomsel.com, im3.id, xl.co.id) — Apify
-  `website-content-crawler` (JS-rendering; the sites are client-rendered SPAs)
+- Official websites, canonical source list (as of 14 Jul 2026):
+  - Telkomsel: https://www.telkomsel.com/
+  - Indosat (IOH): https://ioh.co.id/ID/home
+  - XLSMART: https://www.xlsmart.co.id/id
+  Crawled with Apify `website-content-crawler` (JS-rendering; the sites are
+  client-rendered SPAs). Prior snapshots (through 14 Jul 2026) were crawled
+  from im3.id and xl.co.id instead — the consumer-brand sites linked from
+  ioh.co.id/xlsmart.co.id — see dashboard methodology footer for why, and for
+  when each source last changed.
 - TikTok and X/Twitter were evaluated but are not part of the regular
   pipeline — see `output/` notes and dashboard methodology sections for why.
 
 ## Pipeline (run daily)
 1. `scrape_ig_comments.py <handle>` — refresh last-30-day IG comments per operator
 2. `scrape_website_content.py <label> <start_url> <include_glob>` — refresh
-   website product/pricing content
+   website product/pricing content. Current canonical invocations:
+   - `scrape_website_content.py telkomsel "https://www.telkomsel.com/" "https://www.telkomsel.com/**"`
+   - `scrape_website_content.py indosat "https://ioh.co.id/ID/home" "https://ioh.co.id/**"`
+   - `scrape_website_content.py xlsmart "https://www.xlsmart.co.id/id" "https://www.xlsmart.co.id/**"`
 3. Classify new comments using `CLASSIFICATION_RUBRIC.md`, checking
    `classification_cache.json` first to avoid re-classifying repeats
 4. Update the aggregate numbers embedded in both dashboard HTML files
