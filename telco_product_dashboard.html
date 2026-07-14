@@ -228,7 +228,7 @@
     <header class="page-head">
       <h1>Telco Product Movement &amp; Competitive Tracker</h1>
       <p>Prepaid mobile data product activity — launches, line-up, pricing, quota, and validity — for Telkomsel, Indosat (IOH) and XLSMART, sourced from each operator's official website and official Instagram account.</p>
-      <span class="snapshot-tag"><span class="dot"></span>Daily snapshot · captured 10 Jul 2026, 13:30 WIB</span>
+      <span class="snapshot-tag"><span class="dot"></span>Daily snapshot · captured 14 Jul 2026, 09:42 WIB (website data refreshed; Instagram/sentiment data last refreshed 10 Jul)</span>
     </header>
 
     <div class="col3" style="margin-bottom:20px;">
@@ -393,6 +393,7 @@
       <h2 style="margin-bottom:12px;">Methodology &amp; caveats</h2>
       <footer class="notes">
         <ul>
+          <li><b>14 Jul refresh:</b> all three official websites were re-crawled today and checked against the prior snapshot — no pricing, quota, or line-up changes were found for any operator (XLSMART's Xtra Combo Flex tiers, Indosat's Freedom Internet rate card, and Telkomsel's gated pricing flow all matched the 10 Jul data). Instagram scraping could not be re-run this cycle — the Apify account hit its $5/month usage hard cap partway through the Telkomsel comment pull (cycle resets 8 Aug 2026) — so the product-post sentiment section and Telkomsel's Instagram-sourced catalog entries below still reflect the 10 Jul snapshot, not today.</li>
           <li>Websites were crawled with a JavaScript-rendering scraper (Apify's <code>website-content-crawler</code>, up to 20 pages/site) since all three sites are client-side-rendered apps that return empty shells to a plain HTTP fetch.</li>
           <li>Telkomsel's actual package/pricing page requires entering a phone number before showing any price — it could not be scraped generically. Telkomsel's product figures here come entirely from its official Instagram captions.</li>
           <li>XLSMART's own domain (xlsmart.co.id) is a holding-company page with no product data — the XL line-up shown here was sourced from xl.co.id, which it links to. Smartfren and Axis were not crawled in this pass.</li>
